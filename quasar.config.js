@@ -86,16 +86,16 @@ module.exports = configure(function (ctx) {
     framework: {
       config: {
         brand: {
-          primary: "#0d447a",
-          secondary: "#1aedd8",
-          accent: "#961fab",
+          primary: "#344955",
+          secondary: "#f9aa33",
+          accent: "#c813e8",
 
-          dark: "#1d1d1d",
+          dark: "#232f34",
 
-          positive: "#20e64e",
-          negative: "#ad1527",
-          info: "#65b2c2",
-          warning: "#F2C037",
+          positive: "#2fed5c",
+          negative: "#C10015",
+          info: "#65d9f0",
+          warning: "#d69f06",
         },
       },
 
@@ -164,7 +164,7 @@ module.exports = configure(function (ctx) {
         display: "standalone",
         orientation: "portrait",
         background_color: "#ffffff",
-        theme_color: "#027be3",
+        theme_color: "#344955",
         icons: [
           {
             src: "icons/icon-128x128.png",

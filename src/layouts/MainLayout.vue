@@ -27,45 +27,69 @@
       show-if-above
       :width="250"
       :breakpoint="600"
+      class="bg-primary"
     >
       <q-scroll-area
         style="
           height: calc(100% - 185px);
           margin-top: 185px;
-          border-right: 1px solid #ddd;
+          border-right: 1px solid #232f34;
         "
       >
         <q-list padding>
-          <q-item clickable v-ripple to="/">
+          <q-item
+            clickable
+            :active="link === '/home'"
+            active-class="my-menu-link"
+            v-ripple
+            to="/home"
+          >
             <q-item-section avatar>
-              <q-icon name="home" />
+              <q-icon color="secondary" name="home" />
             </q-item-section>
 
-            <q-item-section> Home </q-item-section>
+            <q-item-section class="text-secondary"> Home </q-item-section>
           </q-item>
 
-          <q-item active clickable v-ripple to="/lista">
+          <q-item
+            clickable
+            :active="link === 'lista'"
+            active-class="my-menu-link"
+            v-ripple
+            to="/lista"
+            color="secondary"
+          >
             <q-item-section avatar>
-              <q-icon name="list" />
+              <q-icon color="secondary" name="list" />
             </q-item-section>
 
-            <q-item-section> Lista </q-item-section>
+            <q-item-section class="text-secondary"> Lista </q-item-section>
           </q-item>
 
-          <q-item clickable v-ripple>
+          <q-item
+            clickable
+            :active="link === 'send'"
+            active-class="my-menu-link"
+            v-ripple
+          >
             <q-item-section avatar>
-              <q-icon name="send" />
+              <q-icon color="secondary" name="send" />
             </q-item-section>
 
-            <q-item-section> Send </q-item-section>
+            <q-item-section class="text-secondary"> Send </q-item-section>
           </q-item>
 
-          <q-item clickable v-ripple>
+          <q-item
+            clickable
+            :active="link === 'drafts'"
+            active-class="my-menu-link"
+            v-ripple
+          >
             <q-item-section avatar>
-              <q-icon name="drafts" />
+              <q-icon color="secondary" name="drafts" />
             </q-item-section>
 
-            <q-item-section> Drafts </q-item-section>
+            <q-item-section class="text-secondary"> Drafts </q-item-section>
           </q-item>
         </q-list>
       </q-scroll-area>
@@ -122,5 +146,8 @@ export default defineComponent({
   z-index: -1;
   opacity: 0.2;
   filter: grayscale(100%);
+}
+.my-menu-link {
+  background-color: #232f34;
 }
 </style>
