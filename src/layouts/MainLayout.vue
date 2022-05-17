@@ -6,6 +6,7 @@
           flat
           dense
           round
+          color="secondary"
           icon="menu"
           aria-label="Menu"
           @click="toggleLeftDrawer"
