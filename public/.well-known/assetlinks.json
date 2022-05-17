@@ -1,0 +1,6 @@
+[{
+        "relation": ["delegate_permission/common.handle_all_urls"],
+        "target" : { "namespace": "android_app", "package_name": "app.netlify.mybo.twa",
+                     "sha256_cert_fingerprints": ["AA:AD:8B:8D:85:72:18:DF:BA:93:E6:00:46:94:40:25:C2:DB:A8:E1:4D:5B:D0:71:17:A8:F1:BF:53:23:AE:49"] }
+      }
+]
