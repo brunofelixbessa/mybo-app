@@ -8,7 +8,7 @@ npm install -g firebase-tools
 
 <script>
 import { defineComponent, onMounted } from "vue";
-import { db, setDoc, doc } from "boot/firebase";
+//import { db, setDoc, doc } from "boot/firebase";
 
 export default defineComponent({
   name: "IndexPage",
@@ -19,11 +19,11 @@ export default defineComponent({
     });
 
     const buscar = async () => {
-      await setDoc(doc(db, "cities", "LA"), {
-        name: "Los Angeles",
-        state: "CA",
-        country: "USA",
-      });
+      // await setDoc(doc(db, "cities", "LA"), {
+      //   name: "Los Angeles",
+      //   state: "CA",
+      //   country: "USA",
+      // });
     };
     return {
       buscar,

@@ -1,13 +1,11 @@
 import { boot } from "quasar/wrappers";
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-import { getFirestore, setDoc, doc } from "firebase/firestore";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+import { initializeApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore/lite";
+import { getAuth, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import firebase from "firebase/compat/app";
+import "firebase/compat/storage";
+
 const firebaseConfig = {
   apiKey: "AIzaSyCSrP7hyl8X3NJo204Bjkx2NAiEwnbfO38",
   authDomain: "balanco-quasar.firebaseapp.com",
@@ -18,15 +16,18 @@ const firebaseConfig = {
   measurementId: "G-DC25ZXCW9J",
 };
 
-// Initialize Firebase
+// Inicialize Firebase Storage
+firebase.initializeApp(firebaseConfig);
+var storage = firebase.storage();
+
+// Initialize Firebase App
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+var storage = firebase.storage();
 const db = getFirestore(app);
+const auth = getAuth(app);
 
-export { db, setDoc, doc };
+export { storage, auth, signInWithPopup, GoogleAuthProvider, db };
 
-// "async" is optional;
-// more info on params: https://v2.quasar.dev/quasar-cli/boot-files
 export default boot(async (/*{ db, setDoc }*/) => {
   // something to do
 });

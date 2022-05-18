@@ -1,6 +1,4 @@
-<template>
-  <q-page class="flex flex-center"> Login </q-page>
-</template>
+<template>Login</template>
 
 <script>
 export default {
@@ -12,5 +10,3 @@ export default {
   },
 };
 </script>
-
-<style scoped></style>

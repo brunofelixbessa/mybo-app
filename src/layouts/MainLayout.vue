@@ -40,10 +40,10 @@
         <q-list padding>
           <q-item
             clickable
-            :active="link === '/home'"
             active-class="my-menu-link"
             v-ripple
             to="/home"
+            exact
           >
             <q-item-section avatar>
               <q-icon color="secondary" name="home" />
@@ -54,10 +54,10 @@
 
           <q-item
             clickable
-            :active="link === 'lista'"
             active-class="my-menu-link"
             v-ripple
             to="/lista"
+            exact
             color="secondary"
           >
             <q-item-section avatar>
@@ -67,12 +67,7 @@
             <q-item-section class="text-secondary"> Lista </q-item-section>
           </q-item>
 
-          <q-item
-            clickable
-            :active="link === 'send'"
-            active-class="my-menu-link"
-            v-ripple
-          >
+          <q-item clickable v-ripple>
             <q-item-section avatar>
               <q-icon color="secondary" name="send" />
             </q-item-section>
@@ -80,12 +75,7 @@
             <q-item-section class="text-secondary"> Send </q-item-section>
           </q-item>
 
-          <q-item
-            clickable
-            :active="link === 'drafts'"
-            active-class="my-menu-link"
-            v-ripple
-          >
+          <q-item clickable v-ripple>
             <q-item-section avatar>
               <q-icon color="secondary" name="drafts" />
             </q-item-section>
