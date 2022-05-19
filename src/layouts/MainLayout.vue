@@ -12,14 +12,13 @@
           @click="toggleLeftDrawer"
         />
 
-        <!-- <q-toolbar-title> Quasar App </q-toolbar-title> -->
-
-        <!-- <div>Quasar v9</div> -->
+        <q-space />
+        <div class="flex flex-center" style="height: 150px">
+          <span class="text-h3">MyBO</span>
+        </div>
+        <q-space />
       </q-toolbar>
-      <div class="q-px-lg q-pt-xl q-mb-md">
-        <div class="text-h3">MyBO</div>
-        <div class="text-sutitle">{{ dataHoje }}</div>
-      </div>
+
       <q-img src="~assets/fundo.jpg" class="header-img absolute-top" />
     </q-header>
 
@@ -32,8 +31,8 @@
     >
       <q-scroll-area
         style="
-          height: calc(100% - 185px);
-          margin-top: 185px;
+          height: calc(100% - 150px);
+          margin-top: 150px;
           border-right: 1px solid #232f34;
         "
       >
@@ -85,13 +84,22 @@
         </q-list>
       </q-scroll-area>
 
-      <q-img class="absolute-top" src="~assets/fundo.jpg" style="height: 185px">
+      <q-img class="absolute-top" src="~assets/fundo.jpg" style="height: 150px">
         <div class="absolute-bottom bg-transparent">
-          <q-avatar size="56px" class="q-mb-sm">
-            <img src="https://cdn.quasar.dev/img/boy-avatar.png" />
+          <q-avatar
+            v-if="storeAuth.isAuthenticated"
+            size="56px"
+            class="q-mb-sm"
+          >
+            <img :src="storeAuth.usuario.photoURL" />
           </q-avatar>
-          <div class="text-weight-bold">Razvan Stoenescu</div>
-          <div>@rstoenescu</div>
+          <q-avatar v-else color="primary" text-color="white">M</q-avatar>
+
+          <div class="text-weight-bold">
+            {{ storeAuth.usuario.displayName }}
+          </div>
+          <div>{{ storeAuth.usuario.email }}</div>
+          <!-- <div>{{ dataHoje }}</div> -->
         </div>
       </q-img>
     </q-drawer>
@@ -103,22 +111,25 @@
 </template>
 
 <script>
-import { defineComponent, ref } from "vue";
-import { date } from "quasar";
+import { defineComponent, ref, onBeforeMount } from "vue";
+//import { date } from "quasar";
+import { useAuth } from "stores/auth";
 
 export default defineComponent({
   name: "MainLayout",
-  computed: {
-    dataHoje() {
-      let timeStamp = Date.now();
-      return date.formatDate(timeStamp, "dddd, DD [de] MMMM [de] YYYY");
-    },
-  },
+  // computed: {
+  //   dataHoje() {
+  //     let timeStamp = Date.now();
+  //     return date.formatDate(timeStamp, "dddd, DD [de] MMMM [de] YYYY");
+  //   },
+  // },
 
   setup() {
     const leftDrawerOpen = ref(false);
+    const storeAuth = useAuth();
 
     return {
+      storeAuth,
       leftDrawerOpen,
       toggleLeftDrawer() {
         leftDrawerOpen.value = !leftDrawerOpen.value;

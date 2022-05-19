@@ -1,31 +1,47 @@
 import { defineStore } from "pinia";
-import { auth, signInWithPopup, GoogleAuthProvider } from "boot/firebase";
+//import { useRouter } from "vue-router";
+import {
+  auth,
+  signInWithPopup,
+  GoogleAuthProvider,
+  createUserWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+} from "boot/firebase";
 
 export const useAuth = defineStore("useAuthStore", {
   state: () => ({
-    user: {},
+    usuario: {},
+    isAuthenticated: false,
   }),
   getters: {
-    user(state) {
-      return state.user;
+    userOld(state) {
+      return this.user;
     },
-    isAuthenticated() {
-      return !!state.user;
+    isAuthenticatedOld() {
+      return !!this.user;
     },
   },
   actions: {
-    loginGoogle() {
+    async loginGoogle() {
       const Google = new GoogleAuthProvider();
-      signInWithPopup(auth, Google)
+      //const router = useRouter();
+
+      await signInWithPopup(auth, Google)
         .then((result) => {
           // This gives you a Google Access Token. You can use it to access the Google API.
           const credential = GoogleAuthProvider.credentialFromResult(result);
           const token = credential.accessToken;
           // The signed-in user info.
-          state.user = result.user;
-          // ...
+          this.usuario = result.user;
+          this.isAuthenticated = true;
+          //console.log("Usuario", this.usuario);
+          // ... notyfication
+          // ... router.push /home
+          // router.push("/");
         })
         .catch((error) => {
+          console.log("Erro" + error);
           // Handle Errors here.
           const errorCode = error.code;
           const errorMessage = error.message;
@@ -36,44 +52,56 @@ export const useAuth = defineStore("useAuthStore", {
           // ...
         });
     },
-    register() {
-      const { auth, createUserWithEmailAndPassword } = getAuth();
-      createUserWithEmailAndPassword(auth, this.email, this.password)
+    async loginEmail(email, password) {
+      await signInWithEmailAndPassword(auth, email, password)
         .then((userCredential) => {
-          const user = userCredential.user;
-          alert("¡Registrado!");
+          // Signed in
+          state.user = userCredential.user;
+          // ...
+        })
+        .catch((error) => {
+          const errorCode = error.code;
+          const errorMessage = error.message;
+        });
+    },
+    async cadastrarUsuario(email, password) {
+      await createUserWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+          state.user = userCredential.user;
+          //alert("¡Registrado!");
         })
         .catch((error) => {
           const errorCode = error.code;
           this.errorMessage = error.message;
-          alert(this.errorMessage);
+          //alert(this.errorMessage);
         });
     },
-    signIn() {
-      const auth = getAuth();
-      signInWithEmailAndPassword(auth, this.email, this.password)
-        .then((userCredential) => {
-          alert("¡Sesión iniciada!");
-          router.push("/auth");
-          const user = userCredential.user;
-        })
-        .catch((error) => {
-          const errorCode = error.code;
-          this.errorMessage = error.message;
-          alert(this.errorMessage);
-        });
-    },
-    signout() {
-      const auth = getAuth();
-      signOut(auth)
+    async signout() {
+      await signOut(auth)
         .then(() => {
-          alert("¡Sesión finalizada!");
+          alert("Sessão finalizada!");
         })
         .catch((error) => {
           const errorCode = error.code;
           this.errorMessage = error.message;
           alert(this.errorMessage);
         });
+    },
+    verificaStatus() {
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          // User is signed in, see docs for a list of available properties
+          // https://firebase.google.com/docs/reference/js/firebase.User
+          const uid = user.uid;
+          this.isAuthenticated = true;
+          console.log(uid);
+          // ...
+        } else {
+          this.isAuthenticated = false;
+          // User is signed out
+          // ...
+        }
+      });
     },
   },
 });

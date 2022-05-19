@@ -2,7 +2,14 @@ import { boot } from "quasar/wrappers";
 
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore/lite";
-import { getAuth, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import {
+  getAuth,
+  signInWithPopup,
+  GoogleAuthProvider,
+  createUserWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+} from "firebase/auth";
 import firebase from "firebase/compat/app";
 import "firebase/compat/storage";
 
@@ -26,7 +33,16 @@ var storage = firebase.storage();
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-export { storage, auth, signInWithPopup, GoogleAuthProvider, db };
+export {
+  storage,
+  db,
+  auth,
+  signInWithPopup,
+  GoogleAuthProvider,
+  createUserWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+};
 
 export default boot(async (/*{ db, setDoc }*/) => {
   // something to do

@@ -1,5 +1,5 @@
 <template>
-  <q-page class="bg-grey-3 colunm q-pa-md">
+  <q-page class="colunm q-pa-md">
     <q-input outlined label="Celular"> </q-input>
     <q-btn label="Salvar número"></q-btn>
   </q-page>
