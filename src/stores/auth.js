@@ -1,5 +1,7 @@
 import { defineStore } from "pinia";
-//import { useRouter } from "vue-router";
+import { db } from "boot/firebase";
+import { doc, setDoc } from "firebase/firestore";
+
 import {
   auth,
   signInWithPopup,
@@ -11,97 +13,147 @@ import {
 
 export const useAuth = defineStore("useAuthStore", {
   state: () => ({
+    uid: "",
     usuario: {},
     isAuthenticated: false,
   }),
   getters: {
-    userOld(state) {
-      return this.user;
+    userID() {
+      return !!this.uid;
     },
     isAuthenticatedOld() {
-      return !!this.user;
+      return !!this.usuario;
     },
   },
   actions: {
     async loginGoogle() {
       const Google = new GoogleAuthProvider();
-      //const router = useRouter();
 
       await signInWithPopup(auth, Google)
         .then((result) => {
-          // This gives you a Google Access Token. You can use it to access the Google API.
           const credential = GoogleAuthProvider.credentialFromResult(result);
-          const token = credential.accessToken;
-          // The signed-in user info.
-          this.usuario = result.user;
-          this.isAuthenticated = true;
-          //console.log("Usuario", this.usuario);
-          // ... notyfication
-          // ... router.push /home
-          // router.push("/");
+          //const token = credential.accessToken;
+          this.setUsuario(result.user);
         })
         .catch((error) => {
-          console.log("Erro" + error);
-          // Handle Errors here.
-          const errorCode = error.code;
-          const errorMessage = error.message;
-          // The email of the user's account used.
-          const email = error.email;
-          // The AuthCredential type that was used.
-          const credential = GoogleAuthProvider.credentialFromError(error);
-          // ...
+          this.removeUsuario(error.message);
         });
     },
     async loginEmail(email, password) {
       await signInWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
-          // Signed in
-          state.user = userCredential.user;
-          // ...
+        .then((result) => {
+          this.setUsuario(result.user);
         })
         .catch((error) => {
-          const errorCode = error.code;
-          const errorMessage = error.message;
+          this.removeUsuario(error.message);
         });
     },
     async cadastrarUsuario(email, password) {
       await createUserWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
-          state.user = userCredential.user;
-          //alert("¡Registrado!");
+        .then((result) => {
+          //Cadastra e já loga
+          this.loginEmail(email, password);
         })
         .catch((error) => {
-          const errorCode = error.code;
-          this.errorMessage = error.message;
-          //alert(this.errorMessage);
+          this.removeUsuario(error.message);
         });
     },
     async signout() {
       await signOut(auth)
         .then(() => {
-          alert("Sessão finalizada!");
+          this.removeUsuario("Usuario deslogado logout");
         })
         .catch((error) => {
-          const errorCode = error.code;
-          this.errorMessage = error.message;
-          alert(this.errorMessage);
+          this.removeUsuario(error.message);
         });
     },
     verificaStatus() {
       onAuthStateChanged(auth, (user) => {
         if (user) {
-          // User is signed in, see docs for a list of available properties
-          // https://firebase.google.com/docs/reference/js/firebase.User
-          const uid = user.uid;
-          this.isAuthenticated = true;
-          console.log(uid);
-          // ...
+          this.setUsuario(user);
+          console.log("Usuario logado");
         } else {
-          this.isAuthenticated = false;
-          // User is signed out
-          // ...
+          this.removeUsuario("Usuario deslogado status");
         }
       });
+    },
+    setUsuario(usuario) {
+      this.usuario = usuario;
+      this.isAuthenticated = true;
+      this.uid = usuario.uid;
+      window.localStorage.setItem("usuario", JSON.stringify(usuario));
+      this.atualizaUsuarioNoFirestore();
+    },
+    getUsuario() {
+      const result = JSON.parse(window.localStorage.getItem("usuario"));
+      console.log("getUsuario", result);
+      if (result) {
+        this.usuario = result;
+        console.log("Aqui", this.uid);
+        this.uid = result.uid;
+        this.isAuthenticated = true;
+      } else {
+        this.removeUsuario("Removido usuario localStorage");
+      }
+    },
+    removeUsuario(msg) {
+      this.usuario = {};
+      this.isAuthenticated = false;
+      this.uid = "";
+      window.localStorage.removeItem("usuario");
+      console.log(msg);
+    },
+    async atualizaUsuarioNoFirestore() {
+      await setDoc(doc(db, "usuarios", this.usuario.uid), {
+        uid: this.usuario.uid,
+        email: this.usuario.email,
+        nome: this.usuario.displayName,
+        foto: this.usuario.photoURL,
+        emailVerificado: this.usuario.emailVerified,
+        status: true,
+      });
+    },
+    async atualizarEmailDoUSuario(emailNovo) {
+      await updateEmail(auth.currentUser, emailNovo)
+        .then(() => {
+          // Email updated!
+          // ...
+        })
+        .catch((error) => {
+          // An error occurred
+          // ...
+        });
+    },
+    async enviarEmailDeVerificacao() {
+      await sendEmailVerification(auth.currentUser).then(() => {
+        // Email verification sent!
+        // ...
+      });
+    },
+    async redefinirSenhaDoUsuario() {
+      const user = auth.currentUser;
+      const newPassword = getASecureRandomPassword();
+
+      await updatePassword(user, newPassword)
+        .then(() => {
+          // Update successful.
+        })
+        .catch((error) => {
+          // An error ocurred
+          // ...
+        });
+    },
+    async emailDeRedefinicaoDeSenha(email) {
+      await sendPasswordResetEmail(auth, email)
+        .then(() => {
+          // Password reset email sent!
+          // ..
+        })
+        .catch((error) => {
+          const errorCode = error.code;
+          const errorMessage = error.message;
+          // ..
+        });
     },
   },
 });

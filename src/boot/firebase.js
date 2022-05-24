@@ -1,7 +1,7 @@
 import { boot } from "quasar/wrappers";
 
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore/lite";
+import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 import {
   getAuth,
   signInWithPopup,
@@ -10,6 +10,7 @@ import {
   signOut,
   onAuthStateChanged,
 } from "firebase/auth";
+
 import firebase from "firebase/compat/app";
 import "firebase/compat/storage";
 
@@ -36,6 +37,9 @@ const auth = getAuth(app);
 export {
   storage,
   db,
+  doc,
+  getDoc,
+  setDoc,
   auth,
   signInWithPopup,
   GoogleAuthProvider,

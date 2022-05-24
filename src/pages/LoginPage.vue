@@ -69,31 +69,56 @@
   </q-page>
 </template>
 <script>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { useAuth } from "stores/auth";
 import { useRouter } from "vue-router";
+import useMsg from "src/services/MsgService";
 
 export default {
   name: "LoginPage",
 
+  onBeforeMount() {
+    //this.storeAuth.verificaStatus();
+    console.log("LoginPage2");
+  },
+
   setup() {
+    const { MsgAguarde, MsgSucesso, MsgAviso } = useMsg();
     const router = useRouter();
     const storeAuth = useAuth();
     const form = ref({
       email: "",
       password: "",
+      password2: "",
     });
 
+    const paginaRequerente = router.currentRoute.value.query.to || "/";
     const cadastrando = ref(false);
 
-    const google = () => {
-      storeAuth.loginGoogle();
-      if (storeAuth.user) {
-        router.push("/");
+    onMounted(() => {
+      storeAuth.verificaStatus();
+      console.log("LoginPage");
+      if (storeAuth.isAuthenticated) {
+        router.push(paginaRequerente);
       }
+    });
+
+    const google = async () => {
+      await storeAuth.loginGoogle();
+      router.push(paginaRequerente);
     };
-    const criarCadastro = () => {
-      storeAuth.cadastrarUsuario(form.value.email, form.value.password);
+    const criarCadastro = async () => {
+      //Verifica senhas igauis
+      if (form.value.password !== form.value.password2) {
+        MsgAviso("Senhas não conferem");
+        return;
+      }
+      MsgAguarde(true);
+      //Cadastr no firebase
+      await tstoreAuth.cadastrarUsuario(form.value.email, form.value.password);
+      MsgAguarde(false);
+
+      router.push(paginaRequerente);
     };
 
     return {

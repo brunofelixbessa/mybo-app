@@ -37,13 +37,7 @@
         "
       >
         <q-list padding>
-          <q-item
-            clickable
-            active-class="my-menu-link"
-            v-ripple
-            to="/home"
-            exact
-          >
+          <q-item clickable active-class="my-menu-link" v-ripple to="/" exact>
             <q-item-section avatar>
               <q-icon color="secondary" name="home" />
             </q-item-section>
@@ -86,14 +80,17 @@
 
       <q-img class="absolute-top" src="~assets/fundo.jpg" style="height: 150px">
         <div class="absolute-bottom bg-transparent">
-          <q-avatar
+          <q-btn
+            round
             v-if="storeAuth.isAuthenticated"
-            size="56px"
-            class="q-mb-sm"
+            @click="sairDoSistema()"
           >
-            <img :src="storeAuth.usuario.photoURL" />
-          </q-avatar>
-          <q-avatar v-else color="primary" text-color="white">M</q-avatar>
+            <q-avatar size="42px">
+              <img :src="storeAuth.usuario.photoURL" />
+            </q-avatar>
+          </q-btn>
+
+          <q-btn v-else round color="secondary" icon="login" to="/login" />
 
           <div class="text-weight-bold">
             {{ storeAuth.usuario.displayName }}
@@ -112,6 +109,7 @@
 
 <script>
 import { defineComponent, ref, onBeforeMount } from "vue";
+import { useRouter } from "vue-router";
 //import { date } from "quasar";
 import { useAuth } from "stores/auth";
 
@@ -127,9 +125,21 @@ export default defineComponent({
   setup() {
     const leftDrawerOpen = ref(false);
     const storeAuth = useAuth();
+    const router = useRouter();
+
+    onBeforeMount(() => {
+      storeAuth.verificaStatus();
+      console.log(storeAuth.isAuthenticated);
+    });
+
+    const sairDoSistema = () => {
+      storeAuth.signout();
+      router.push("/login");
+    };
 
     return {
       storeAuth,
+      sairDoSistema,
       leftDrawerOpen,
       toggleLeftDrawer() {
         leftDrawerOpen.value = !leftDrawerOpen.value;

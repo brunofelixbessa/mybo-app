@@ -17,6 +17,12 @@ const routes = [
         path: "lista",
         name: "lista",
         component: () => import("pages/ListaPage.vue"),
+        meta: { requerLogin: true },
+      },
+      {
+        path: "admin",
+        name: "admin",
+        component: () => import("pages/AdminPage.vue"),
       },
     ],
   },
