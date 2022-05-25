@@ -29,10 +29,12 @@ export default route(function (/*{ store, ssrContext }*/) {
   });
 
   Router.beforeEach((to, from, next) => {
-    const store = useAuth();
+    const storeAuth = useAuth();
+    storeAuth.getUsuario();
+
     if (
       to.matched.some((record) => record.meta.requerLogin) &&
-      !store.isAuthenticated
+      !storeAuth.isAuthenticated
     ) {
       next(
         {

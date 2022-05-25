@@ -1,7 +1,16 @@
 import { boot } from "quasar/wrappers";
 
 import { initializeApp } from "firebase/app";
-import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  setDoc,
+  collection,
+  query,
+  where,
+  onSnapshot,
+} from "firebase/firestore";
 import {
   getAuth,
   signInWithPopup,
@@ -40,6 +49,10 @@ export {
   doc,
   getDoc,
   setDoc,
+  collection,
+  query,
+  where,
+  onSnapshot,
   auth,
   signInWithPopup,
   GoogleAuthProvider,

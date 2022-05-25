@@ -75,6 +75,31 @@
 
             <q-item-section class="text-secondary"> Drafts </q-item-section>
           </q-item>
+
+          <q-item
+            v-if="storeAuth.isAuthenticated"
+            clickable
+            v-ripple
+            to="/admin"
+            exact
+          >
+            <q-item-section avatar>
+              <q-icon color="secondary" name="settings" />
+            </q-item-section>
+
+            <q-item-section class="text-secondary">
+              Configuração
+            </q-item-section>
+          </q-item>
+
+          <!-- Versao -->
+          <q-item class="absolute-bottom" clickable v-ripple>
+            <q-item-section avatar>
+              <q-icon color="secondary" name="info" />
+            </q-item-section>
+
+            <q-item-section class="text-secondary"> v1.0 </q-item-section>
+          </q-item>
         </q-list>
       </q-scroll-area>
 
@@ -108,7 +133,7 @@
 </template>
 
 <script>
-import { defineComponent, ref, onBeforeMount } from "vue";
+import { defineComponent, ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 //import { date } from "quasar";
 import { useAuth } from "stores/auth";
@@ -127,8 +152,8 @@ export default defineComponent({
     const storeAuth = useAuth();
     const router = useRouter();
 
-    onBeforeMount(() => {
-      storeAuth.verificaStatus();
+    onMounted(() => {
+      storeAuth.getUsuario();
       console.log(storeAuth.isAuthenticated);
     });
 

@@ -97,7 +97,7 @@ export default {
 
     onMounted(() => {
       storeAuth.verificaStatus();
-      console.log("LoginPage");
+      console.log("LoginPage", storeAuth.isAuthenticated, paginaRequerente);
       if (storeAuth.isAuthenticated) {
         router.push(paginaRequerente);
       }

@@ -14,6 +14,7 @@ import {
 export const useAuth = defineStore("useAuthStore", {
   state: () => ({
     uid: "",
+    admin: false,
     usuario: {},
     isAuthenticated: false,
   }),
@@ -83,13 +84,14 @@ export const useAuth = defineStore("useAuthStore", {
       this.uid = usuario.uid;
       window.localStorage.setItem("usuario", JSON.stringify(usuario));
       this.atualizaUsuarioNoFirestore();
+      //this.getUsuario();
     },
     getUsuario() {
       const result = JSON.parse(window.localStorage.getItem("usuario"));
       console.log("getUsuario", result);
       if (result) {
         this.usuario = result;
-        console.log("Aqui", this.uid);
+        console.log("Id do cache", this.uid);
         this.uid = result.uid;
         this.isAuthenticated = true;
       } else {
@@ -110,6 +112,8 @@ export const useAuth = defineStore("useAuthStore", {
         nome: this.usuario.displayName,
         foto: this.usuario.photoURL,
         emailVerificado: this.usuario.emailVerified,
+        grupoMaster: "",
+        subgrupo: 1,
         status: true,
       });
     },

@@ -1,5 +1,14 @@
 import { ref } from "vue";
-import { db, doc, getDoc, setDoc } from "boot/firebase";
+import {
+  db,
+  doc,
+  getDoc,
+  setDoc,
+  collection,
+  query,
+  where,
+  onSnapshot,
+} from "boot/firebase";
 //import { doc, getDoc, setDoc } from "firebase/firestore";
 import useMsg from "src/services/MsgService";
 
@@ -18,39 +27,38 @@ export default function useFiretore() {
         MsgAviso("Erro desconhecido ao salvar grupo");
       });
   };
-  const buscarAdministrador = () => {
-    // const q = query(collection(db, "grupos"));
-    // const unsubscribe = onSnapshot(q, (snapshot) => {
-    //   snapshot.docChanges().forEach((change) => {
-    //     if (change.type === "added") {
-    //       console.log("New city: ", change.doc.data());
-    //     }
-    //     if (change.type === "modified") {
-    //       console.log("Modified city: ", change.doc.data());
-    //     }
-    //     if (change.type === "removed") {
-    //       console.log("Removed city: ", change.doc.data());
-    //     }
-    //   });
-    // });
-  };
-  const buscaUmGrupo = async (id) => {
+
+  const buscaUmGrupoCache = async (id) => {
     const docRef = doc(db, "grupos", id);
     const docSnap = await getDoc(docRef);
+
     if (docSnap.exists()) {
-      console.log("Dados encontrados");
+      //console.log("Document data:", docSnap.data());
       return docSnap.data();
     } else {
-      console.log("Sem dados de grupot!");
+      console.log("No such document!");
     }
   };
-  const adcionarUmSubGrupo = async () => {};
+  const buscaUmGrupoQuery = async (chave, valor) => {
+    const q = query(collection(db, "grupos"), where(chave, "==", valor));
+
+    const querySnapshot = await getDocs(q);
+    querySnapshot.forEach((doc) => {
+      // doc.data() is never undefined for query doc snapshots
+      console.log(doc.id, " => ", doc.data());
+    });
+  };
+  const buscaUmGrupoSnap = async (id) => {
+    const unsub = onSnapshot(doc(db, "cities", "SF"), (doc) => {
+      console.log("Current data: ", doc.data());
+    });
+    return unsub;
+  };
 
   return {
     result,
     salvarGrupo,
-    buscarAdministrador,
-    buscaUmGrupo,
-    adcionarUmSubGrupo,
+    buscaUmGrupoCache,
+    buscaUmGrupoSnap,
   };
 }

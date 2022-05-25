@@ -28,43 +28,67 @@
           title="Treats"
           :rows="linhas"
           :columns="columns"
-          row-key="codigo"
-          selection="multiple"
-          v-model:selected="selected"
+          row-key="index"
         >
           <template v-slot:top>
             <q-input
-              v-model="subgrupo.codigo"
+              v-model="form.codigo"
               label="Codigo"
-              class="col"
+              class="col-2"
               outlined
               type="number"
             />
             <q-input
-              v-model="subgrupo.nome"
+              v-model="form.nome"
               label="Nome"
-              class="col"
+              class="col-5"
               outlined
               type="text"
             />
             <q-input
-              v-model="subgrupo.valor"
+              v-model="form.valor"
               label="Valor"
-              class="col"
+              class="col-2"
               outlined
               type="text"
             />
-            <q-space />
-            <q-btn icon="add" color="secondary" size="lg" />
+            <q-toggle class="col-2" v-model="form.ativo" label="Ativo" />
+            <q-btn
+              class="col-1"
+              icon="add"
+              color="primary"
+              size="lg"
+              @click="addSubGrupo()"
+            />
           </template>
 
-          <template v-slot:header-selection="scope">
+          <template v-slot:body-cell-actions="props">
+            <q-td :props="props" class="q-gutter-x-sm">
+              <b-btn
+                dense
+                icon="edit"
+                color="info"
+                @click="editarLinha(props.row)"
+              >
+                <q-tooltip>Editar</q-tooltip>
+              </b-btn>
+              <b-btn
+                dense
+                icon="delete"
+                color="negative"
+                @click="removerLinha(props.row)"
+                ><q-tooltip>Deletar</q-tooltip></b-btn
+              >
+            </q-td>
+          </template>
+
+          <!-- <template v-slot:header-selection="scope">
             <q-toggle v-model="scope.selected" label="Ativo" />
           </template>
 
           <template v-slot:body-selection="scope">
             <q-toggle v-model="scope.selected" />
-          </template>
+          </template>-->
         </q-table>
       </div>
 
@@ -89,25 +113,28 @@ import { useAuth } from "stores/auth";
 export default defineComponent({
   setup() {
     const storeAuth = useAuth();
-    const { salvarGrupo, buscaUmGrupo } = useFiretore();
+    const { salvarGrupo, buscaUmGrupoCache } = useFiretore();
+    const { MsgSucesso, MsgErro } = useMsg();
 
     //Variaveis
     const columns = [
+      { name: "index", label: "#", field: "index", align: "left" },
       { name: "codigo", label: "Codigo", field: "codigo", align: "left" },
       { name: "nome", label: "Nome", field: "nome", align: "left" },
       { name: "valor", label: "Valor", field: "valor", align: "left" },
-      { name: "status", label: "Ativo", field: "status", align: "center" },
+      { name: "Ativo", label: "Ativo", field: "ativo", align: "center" },
+      { name: "actions", label: "actions", field: "actions", align: "center" },
     ];
     //const uid = ref("XeGyV7akvVPJaiVtJ4NTe6KY4Y02");
 
-    const selected = ref([]);
-
+    const selecionadas = ref([]);
     const linhas = ref([]);
-    const subgrupo = ref({
-      codigo: 9,
-      nome: "Sub grupo Teste",
-      valor: 0,
-      status: true,
+    const form = ref({
+      index: "",
+      codigo: "",
+      nome: "",
+      valor: "",
+      ativo: true,
     });
     const grupo = ref({
       id: "",
@@ -119,13 +146,36 @@ export default defineComponent({
     //Metodos
     onMounted(async () => {
       storeAuth.getUsuario(); //busca no cache
-      grupo.value = await buscaUmGrupo(storeAuth.uid);
+      grupo.value = await buscaUmGrupoCache(storeAuth.uid);
       linhas.value = grupo.value.subgrupos;
     });
 
     const onSalvar = () => {
-      grupo.value.subgrupos.push(subgrupo);
+      // linhas.value.forEach((element) => {
+      //   //console.log(element);
+      //   grupo.value.subgrupos.push(element);
+      // });
+      //console.log(grupo.value);
+      //console.log(selecionadas.value);
       salvarGrupo(grupo.value);
+    };
+
+    const addSubGrupo = () => {
+      if (form.value.codigo <= 0 || form.value.nome === "") {
+        MsgErro("Codigo deve ser maior que 0 e nome não pode ser vazio");
+        return;
+      }
+      linhas.value.push({
+        index: linhas.value.length,
+        codigo: form.value.codigo,
+        nome: form.value.nome,
+        valor: form.value.valor,
+        ativo: form.value.ativo,
+      });
+
+      form.value.codigo = "";
+      form.value.nome = "";
+      form.value.valor = "";
     };
 
     const onEditar = () => {
@@ -134,12 +184,13 @@ export default defineComponent({
 
     return {
       grupo,
-      subgrupo,
+      form,
       columns,
       linhas,
-      selected,
+      selecionadas,
       onSalvar,
       onEditar,
+      addSubGrupo,
     };
   },
 });
