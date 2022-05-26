@@ -92,7 +92,7 @@ module.exports = configure(function (ctx) {
 
           dark: "#232f34",
 
-          positive: "#2fed5c",
+          positive: "#69db58",
           negative: "#C10015",
           info: "#65d9f0",
           warning: "#d69f06",

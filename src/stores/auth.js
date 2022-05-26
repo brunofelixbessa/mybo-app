@@ -13,9 +13,17 @@ import {
 
 export const useAuth = defineStore("useAuthStore", {
   state: () => ({
-    uid: "",
-    admin: false,
-    usuario: {},
+    usuario: {
+      uid: "",
+      email: "",
+      displayName: "",
+      photoURL: "",
+      emailVerified: false,
+      grupoMaster: "",
+      subGrupo: "",
+      status: "",
+      permissoes: ["ler", "editar", "baixar"], //Leitor , Editor, Admin
+    },
     isAuthenticated: false,
   }),
   getters: {
@@ -71,51 +79,34 @@ export const useAuth = defineStore("useAuthStore", {
     verificaStatus() {
       onAuthStateChanged(auth, (user) => {
         if (user) {
-          this.setUsuario(user);
+          this.getUsuario(user);
           console.log("Usuario logado");
         } else {
           this.removeUsuario("Usuario deslogado status");
         }
       });
     },
-    setUsuario(usuario) {
-      this.usuario = usuario;
-      this.isAuthenticated = true;
-      this.uid = usuario.uid;
-      window.localStorage.setItem("usuario", JSON.stringify(usuario));
-      this.atualizaUsuarioNoFirestore();
-      //this.getUsuario();
+    setUsuario(user) {
+      this.usuario = user; // Hidrata a variavel interna e salva localmente
+      window.localStorage.setItem("usuario", JSON.stringify(this.usuario));
+      this.atualizaUsuarioNoFirestore(this.usuario); //Salva no firestore
+      this.getUsuario(); // So depois pega do storage local
     },
     getUsuario() {
-      const result = JSON.parse(window.localStorage.getItem("usuario"));
-      console.log("getUsuario", result);
-      if (result) {
-        this.usuario = result;
-        console.log("Id do cache", this.uid);
-        this.uid = result.uid;
+      const user = JSON.parse(window.localStorage.getItem("usuario"));
+      //console.log("getUsuario", result);
+      if (user) {
+        this.usuario = user;
         this.isAuthenticated = true;
-      } else {
-        this.removeUsuario("Removido usuario localStorage");
       }
     },
-    removeUsuario(msg) {
+    removeUsuario() {
       this.usuario = {};
       this.isAuthenticated = false;
-      this.uid = "";
       window.localStorage.removeItem("usuario");
-      console.log(msg);
     },
-    async atualizaUsuarioNoFirestore() {
-      await setDoc(doc(db, "usuarios", this.usuario.uid), {
-        uid: this.usuario.uid,
-        email: this.usuario.email,
-        nome: this.usuario.displayName,
-        foto: this.usuario.photoURL,
-        emailVerificado: this.usuario.emailVerified,
-        grupoMaster: "",
-        subgrupo: 1,
-        status: true,
-      });
+    async atualizaUsuarioNoFirestore(user) {
+      await setDoc(doc(db, "usuarios", user.uid), user);
     },
     async atualizarEmailDoUSuario(emailNovo) {
       await updateEmail(auth.currentUser, emailNovo)

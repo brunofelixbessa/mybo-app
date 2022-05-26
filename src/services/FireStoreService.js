@@ -29,15 +29,21 @@ export default function useFiretore() {
   };
 
   const buscaUmGrupoCache = async (id) => {
-    const docRef = doc(db, "grupos", id);
-    const docSnap = await getDoc(docRef);
-
-    if (docSnap.exists()) {
-      //console.log("Document data:", docSnap.data());
-      return docSnap.data();
-    } else {
-      console.log("No such document!");
+    console.log("buscaUmGrupoCache", id);
+    if (id) {
+      const docRef = doc(db, "grupos", id);
+      const doc = await getDoc(docRef);
+      return doc;
     }
+    // const docRef = doc(db, "grupos", id);
+    // const docSnap = await getDoc(docRef);
+    // console.log("Document data:", docSnap.data());
+    // if (docSnap.exists()) {
+    //   //console.log("Document data:", docSnap.data());
+    //   return docSnap.data();
+    // } else {
+    //   console.log("No such document!");
+    // }
   };
   const buscaUmGrupoQuery = async (chave, valor) => {
     const q = query(collection(db, "grupos"), where(chave, "==", valor));

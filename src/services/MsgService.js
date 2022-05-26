@@ -5,9 +5,14 @@ export default function useMsg() {
   const MsgSucesso = (message) => {
     $q.notify({
       progress: true,
-      icon: "check",
+      icon: "task_alt",
       type: "positive",
-      message: message || "Tudo Certo !",
+      position: "top",
+      textColor: "dark",
+      html: true,
+      message:
+        "<span class='text-h6 q-pa-xl q-my-xl'>" + message + "</span>" ||
+        "Tudo Certo !",
     });
   };
 

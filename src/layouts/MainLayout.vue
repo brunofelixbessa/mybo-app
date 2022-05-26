@@ -154,7 +154,7 @@ export default defineComponent({
 
     onMounted(() => {
       storeAuth.getUsuario();
-      console.log(storeAuth.isAuthenticated);
+      //console.log(storeAuth.isAuthenticated);
     });
 
     const sairDoSistema = () => {

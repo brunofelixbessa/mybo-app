@@ -1,8 +1,8 @@
 @
 <template>
   <q-page class="row justify-center q-pa-md">
-    <q-form class="col-md-8 col-xs-12 q-gutter-y-md">
-      <h5>Grupo ou Matriz</h5>
+    <q-form @submit="onSalvar()" class="col-md-10 col-xs-12 q-gutter-y-md">
+      <p class="text-h6">Grupo ou Matriz</p>
       <div class="row">
         <q-input
           v-model="grupo.nome"
@@ -10,18 +10,70 @@
           class="col"
           outlined
           type="text"
+          lazy-rules
+          :rules="[(val) => (val && val.length > 0) || 'Campo obrigatório.']"
         />
         <q-input
           v-model="grupo.valor"
           label="Nome completo"
           class="col"
           outlined
-          type="number"
+          type="text"
+          lazy-rules
+          :rules="[(val) => (val && val.length > 0) || 'Campo obrigatório.']"
         />
+        <q-input
+          label="Telefone"
+          v-model="grupo.telefone"
+          class="col"
+          outlined
+          type="number"
+          lazy-rules
+          :rules="[(val) => (val && val.length > 0) || 'Campo obrigatório.']"
+        ></q-input>
+      </div>
+      <div class="row">
+        <q-input class="col" outlined v-model="grupo.primary" label="Primaria">
+          <template v-slot:append>
+            <q-icon name="colorize" class="cursor-pointer">
+              <q-popup-proxy
+                cover
+                transition-show="scale"
+                transition-hide="scale"
+              >
+                <q-color v-model="grupo.primary" />
+              </q-popup-proxy>
+            </q-icon>
+          </template>
+        </q-input>
+
+        <q-input
+          class="col"
+          outlined
+          v-model="grupo.secondary"
+          label="Secundaria"
+        >
+          <template v-slot:append>
+            <q-icon name="colorize" class="cursor-pointer">
+              <q-popup-proxy
+                cover
+                transition-show="scale"
+                transition-hide="scale"
+              >
+                <q-color v-model="grupo.secondary" />
+              </q-popup-proxy>
+            </q-icon>
+          </template>
+        </q-input>
+        <q-file class="col" outlined v-model="grupo.logo" label="Logo">
+          <template v-slot:prepend>
+            <q-icon name="cloud_upload" />
+          </template>
+        </q-file>
       </div>
       <q-separator></q-separator>
-      <h5>SubGrupos ou Filiais</h5>
-
+      <p class="text-h6">SubGrupos ou Filiais</p>
+      <p>ID e Nome são obrigatórios</p>
       <div class="row">
         <q-table
           class="col"
@@ -32,8 +84,8 @@
         >
           <template v-slot:top>
             <q-input
-              v-model="form.codigo"
-              label="Codigo"
+              v-model="form.id"
+              label="ID"
               class="col-2"
               outlined
               type="number"
@@ -63,32 +115,21 @@
           </template>
 
           <template v-slot:body-cell-actions="props">
-            <q-td :props="props" class="q-gutter-x-sm">
-              <b-btn
-                dense
+            <q-td :props="props">
+              <q-btn
+                outline
+                color="primary"
                 icon="edit"
-                color="info"
                 @click="editarLinha(props.row)"
-              >
-                <q-tooltip>Editar</q-tooltip>
-              </b-btn>
-              <b-btn
-                dense
-                icon="delete"
+              ></q-btn>
+              <q-btn
+                outline
                 color="negative"
+                icon="delete"
                 @click="removerLinha(props.row)"
-                ><q-tooltip>Deletar</q-tooltip></b-btn
-              >
+              ></q-btn>
             </q-td>
           </template>
-
-          <!-- <template v-slot:header-selection="scope">
-            <q-toggle v-model="scope.selected" label="Ativo" />
-          </template>
-
-          <template v-slot:body-selection="scope">
-            <q-toggle v-model="scope.selected" />
-          </template>-->
         </q-table>
       </div>
 
@@ -98,7 +139,7 @@
         size="xl"
         color="secondary"
         label="Salvar"
-        @click="onSalvar()"
+        type="submit"
       ></q-btn>
     </q-form>
   </q-page>
@@ -118,68 +159,101 @@ export default defineComponent({
 
     //Variaveis
     const columns = [
-      { name: "index", label: "#", field: "index", align: "left" },
-      { name: "codigo", label: "Codigo", field: "codigo", align: "left" },
+      { name: "id", label: "ID", field: "id", align: "left" },
       { name: "nome", label: "Nome", field: "nome", align: "left" },
       { name: "valor", label: "Valor", field: "valor", align: "left" },
       { name: "Ativo", label: "Ativo", field: "ativo", align: "center" },
-      { name: "actions", label: "actions", field: "actions", align: "center" },
+      { name: "actions", label: "Ações", field: "actions", align: "center" },
     ];
     //const uid = ref("XeGyV7akvVPJaiVtJ4NTe6KY4Y02");
 
-    const selecionadas = ref([]);
     const linhas = ref([]);
     const form = ref({
-      index: "",
-      codigo: "",
+      id: "",
       nome: "",
       valor: "",
       ativo: true,
+      urlPulica: "",
+      qrCode: "",
     });
     const grupo = ref({
       id: "",
       nome: "",
       valor: "",
+      primary: "",
+      secondary: "",
+      logo: "",
       subgrupos: [],
     });
 
     //Metodos
     onMounted(async () => {
       storeAuth.getUsuario(); //busca no cache
-      grupo.value = await buscaUmGrupoCache(storeAuth.uid);
-      linhas.value = grupo.value.subgrupos;
+      buscaGrupo();
     });
 
+    const buscaGrupo = async () => {
+      const retorno = await buscaUmGrupoCache(storeAuth.usuario.grupoMaster);
+      //console.log(retorno);
+      //grupo.value = retorno;
+      //linhas.value = grupo.value.subgrupos;
+    };
+
     const onSalvar = () => {
-      // linhas.value.forEach((element) => {
-      //   //console.log(element);
-      //   grupo.value.subgrupos.push(element);
-      // });
-      //console.log(grupo.value);
-      //console.log(selecionadas.value);
       salvarGrupo(grupo.value);
     };
 
     const addSubGrupo = () => {
-      if (form.value.codigo <= 0 || form.value.nome === "") {
+      if (form.value.id <= 0 || form.value.nome === "") {
         MsgErro("Codigo deve ser maior que 0 e nome não pode ser vazio");
         return;
       }
       linhas.value.push({
-        index: linhas.value.length,
-        codigo: form.value.codigo,
+        id: form.value.id,
         nome: form.value.nome,
         valor: form.value.valor,
         ativo: form.value.ativo,
+        urlPulica: form.value.urlPulica,
+        qrCode: form.value.qrCode,
       });
 
-      form.value.codigo = "";
+      form.value.id = "";
       form.value.nome = "";
       form.value.valor = "";
+      form.value.ativo = true;
+      form.value.urlPulica = "";
+      form.value.qrCode = "";
     };
 
-    const onEditar = () => {
-      // console.log("excluirItem");
+    const removerLinha = async (linha) => {
+      try {
+        $q.dialog({
+          title: "Remover",
+          message:
+            "Deseja realmente deletar esse grupo? Não será possivel restaurar os dados.",
+          cancel: true,
+          persistent: true,
+        }).onOk(async () => {
+          //await remover("campanhas", linha.id);
+          MsgSucesso("Removido com sucesso");
+          buscaGrupo();
+        });
+      } catch (error) {
+        $q.notify({
+          color: "red-5",
+          textColor: "white",
+          icon: "cloud_done",
+          message: error,
+        });
+      }
+    };
+
+    const editarLinha = (linha) => {
+      form.value.codigo = linha.codigo;
+      form.value.nome = linha.nome;
+      form.value.valor = linha.valor;
+      form.value.ativo = linha.ativo;
+      form.value.index = linha.index;
     };
 
     return {
@@ -187,10 +261,10 @@ export default defineComponent({
       form,
       columns,
       linhas,
-      selecionadas,
       onSalvar,
-      onEditar,
       addSubGrupo,
+      removerLinha,
+      editarLinha,
     };
   },
 });
