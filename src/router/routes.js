@@ -9,18 +9,24 @@ const routes = [
         component: () => import("pages/IndexPage.vue"),
       },
       {
-        path: "login",
+        path: "/leitor",
+        name: "leitor",
+        component: () => import("pages/LeitorPage.vue"),
+        meta: { leitor: true },
+      },
+      {
+        path: "/login",
         name: "login",
         component: () => import("pages/LoginPage.vue"),
       },
       {
-        path: "lista",
+        path: "/lista",
         name: "lista",
         component: () => import("pages/ListaPage.vue"),
         meta: { requerLogin: true },
       },
       {
-        path: "admin",
+        path: "/admin",
         name: "admin",
         component: () => import("pages/AdminPage.vue"),
         meta: { requerLogin: true },

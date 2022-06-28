@@ -13,7 +13,7 @@
         />
 
         <q-space />
-        <div class="flex flex-center" style="height: 150px">
+        <div class="flex flex-center" style="height: 100px">
           <span class="text-h3">MyBO</span>
         </div>
         <q-space />
@@ -36,7 +36,7 @@
           border-right: 1px solid #232f34;
         "
       >
-        <q-list padding>
+        <q-list padding bordered separator>
           <q-item clickable active-class="my-menu-link" v-ripple to="/" exact>
             <q-item-section avatar>
               <q-icon color="secondary" name="home" />
@@ -109,19 +109,19 @@
             round
             v-if="storeAuth.isAuthenticated"
             @click="sairDoSistema()"
+            icon="person"
           >
-            <q-avatar size="42px">
+            <!-- <q-avatar size="42px">
               <img :src="storeAuth.usuario.photoURL" />
-            </q-avatar>
+            </q-avatar> -->
           </q-btn>
 
           <q-btn v-else round color="secondary" icon="login" to="/login" />
 
           <div class="text-weight-bold">
-            {{ storeAuth.usuario.displayName }}
+            {{ storeAuth.usuario?.displayName || "Nome do usuário" }}
           </div>
-          <div>{{ storeAuth.usuario.email }}</div>
-          <!-- <div>{{ dataHoje }}</div> -->
+          <div>{{ storeAuth.usuario?.email || "email do usuário" }}</div>
         </div>
       </q-img>
     </q-drawer>
@@ -133,19 +133,13 @@
 </template>
 
 <script>
-import { defineComponent, ref, onMounted } from "vue";
+import { defineComponent, ref, onMounted, onBeforeMount } from "vue";
 import { useRouter } from "vue-router";
 //import { date } from "quasar";
 import { useAuth } from "stores/auth";
 
 export default defineComponent({
   name: "MainLayout",
-  // computed: {
-  //   dataHoje() {
-  //     let timeStamp = Date.now();
-  //     return date.formatDate(timeStamp, "dddd, DD [de] MMMM [de] YYYY");
-  //   },
-  // },
 
   setup() {
     const leftDrawerOpen = ref(false);
@@ -153,12 +147,20 @@ export default defineComponent({
     const router = useRouter();
 
     onMounted(() => {
-      storeAuth.getUsuario();
-      //console.log(storeAuth.isAuthenticated);
+      buscaStatus();
     });
 
+     onBeforeMount(() => {
+      console.log(storeAuth.isAuthenticated)
+    });
+
+    const buscaStatus = async () => {
+      await storeAuth.verificaStatus();
+    };
+
     const sairDoSistema = () => {
-      storeAuth.signout();
+      console.log("Saindo do sistema");
+      storeAuth.removeUsuario();
       router.push("/login");
     };
 

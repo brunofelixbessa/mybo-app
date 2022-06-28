@@ -9,7 +9,7 @@ import routes from "./routes";
 
 import { useAuth } from "stores/auth";
 
-export default route(function (/*{ store, ssrContext }*/) {
+export default route(function ({ store }) {
   const createHistory = process.env.SERVER
     ? createMemoryHistory
     : process.env.VUE_ROUTER_MODE === "history"
@@ -30,7 +30,6 @@ export default route(function (/*{ store, ssrContext }*/) {
 
   Router.beforeEach((to, from, next) => {
     const storeAuth = useAuth();
-    storeAuth.getUsuario();
 
     if (
       to.matched.some((record) => record.meta.requerLogin) &&

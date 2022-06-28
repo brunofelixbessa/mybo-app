@@ -1,14 +1,19 @@
 import { defineStore } from "pinia";
-import { db } from "boot/firebase";
-import { doc, setDoc } from "firebase/firestore";
 
 import {
   auth,
   signInWithPopup,
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
+  db,
+  doc,
+  setDoc,
+  getDoc,
+  serverTimestamp,
+  updateProfile,
 } from "boot/firebase";
 
 export const useAuth = defineStore("useAuthStore", {
@@ -21,92 +26,179 @@ export const useAuth = defineStore("useAuthStore", {
       emailVerified: false,
       grupoMaster: "",
       subGrupo: "",
-      status: "",
-      permissoes: ["ler", "editar", "baixar"], //Leitor , Editor, Admin
+      ativo: true,
+      admin: true,
+      leitor: true,
+      editor: true,
     },
     isAuthenticated: false,
   }),
   getters: {
-    userID() {
-      return !!this.uid;
-    },
-    isAuthenticatedOld() {
-      return !!this.usuario;
-    },
+    getUser: (state) => state.usuario,
+    //isAuthenticated: (state) => state.authenticated,
   },
   actions: {
+    // Testando actions
+    async login(form) {
+      const { email, password } = form;
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (error) {
+        switch (error.code) {
+          case "auth/user-not-found":
+            alert("User not found");
+            break;
+          case "auth/wrong-password":
+            alert("Wrong password");
+            break;
+          default:
+            alert("Something went wrong");
+        }
+        return;
+      }
+      this.usuario = auth.currentUser;
+    },
+    // Fim teste actions
     async loginGoogle() {
-      const Google = new GoogleAuthProvider();
-
-      await signInWithPopup(auth, Google)
+      await signInWithPopup(auth, new GoogleAuthProvider())
         .then((result) => {
-          const credential = GoogleAuthProvider.credentialFromResult(result);
-          //const token = credential.accessToken;
-          this.setUsuario(result.user);
+          this.buscaUsuario(result.user);
+          //this.atualizaUsuarioNoFirestore(result.user);
+        })
+        .catch((error) => {
+          console.log(error);
+          //this.removeUsuario(error.message);
+        });
+    },
+    async loginEmail(form) {
+      await signInWithEmailAndPassword(auth, form.email, form.password)
+        .then((result) => {
+          //this.guardaUsuario(result.user);
+          //this.usuario.nome = result.user;
+          //this.atualizaUsuarioNoFirestore();
         })
         .catch((error) => {
           this.removeUsuario(error.message);
         });
     },
-    async loginEmail(email, password) {
-      await signInWithEmailAndPassword(auth, email, password)
+    async cadastrarUsuario(form) {
+      await createUserWithEmailAndPassword(auth, form.email, form.password)
         .then((result) => {
-          this.setUsuario(result.user);
+          // Cadastra e já loga
+          if (result) {
+            //console.log(result);
+            //this.hidrataUsuario(result.user);
+            //this.usuario.displayName = form.nome; // Adiciona o nome e atualiza o profile
+            //this.atualizarProfile();
+          }
         })
         .catch((error) => {
+          switch (error.code) {
+            case "auth/email-already-in-use":
+              alert("Email já está cadastrado.");
+              break;
+            case "auth/invalid-email":
+              alert("Invalid email");
+              break;
+            case "auth/operation-not-allowed":
+              alert("Operation not allowed");
+              break;
+            case "auth/weak-password":
+              alert("Weak password");
+              break;
+            default:
+              alert("Erro desconhecido.");
+          }
+          //console.log(error);
           this.removeUsuario(error.message);
         });
     },
-    async cadastrarUsuario(email, password) {
-      await createUserWithEmailAndPassword(auth, email, password)
-        .then((result) => {
-          //Cadastra e já loga
-          this.loginEmail(email, password);
-        })
-        .catch((error) => {
-          this.removeUsuario(error.message);
-        });
-    },
-    async signout() {
-      await signOut(auth)
+    async atualizarProfile() {
+      await updateProfile(auth.currentUser, {
+        displayName: this.usuario.displayName,
+        photoURL: "https://cdn.quasar.dev/logo-v2/svg/logo.svg",
+      })
         .then(() => {
-          this.removeUsuario("Usuario deslogado logout");
+          // Profile updated!
+          this.atualizaUsuarioNoFirestore(this.usuario);
+          this.buscaUsuario(this.usuario);
         })
         .catch((error) => {
-          this.removeUsuario(error.message);
+          console.log(error);
+          // An error occurred
+          // ...
         });
     },
-    verificaStatus() {
-      onAuthStateChanged(auth, (user) => {
+    async verificaStatus() {
+      this.usuario = JSON.parse(window.localStorage.getItem("usuario")); // Busca localstorage
+      await onAuthStateChanged(auth, (user) => {
         if (user) {
-          this.getUsuario(user);
-          console.log("Usuario logado");
+          console.log("verificaStatus Usuario logado ", user);
+          this.isAuthenticated = true;
+          //this.buscaUsuario(user);
         } else {
-          this.removeUsuario("Usuario deslogado status");
+          this.isAuthenticated = false;
+          this.removeUsuario();
         }
       });
     },
-    setUsuario(user) {
-      this.usuario = user; // Hidrata a variavel interna e salva localmente
-      window.localStorage.setItem("usuario", JSON.stringify(this.usuario));
-      this.atualizaUsuarioNoFirestore(this.usuario); //Salva no firestore
-      this.getUsuario(); // So depois pega do storage local
+    hidrataUsuario(user) {
+      this.usuario.uid = user.uid;
+      this.usuario.email = user.email;
+      this.usuario.displayName = user.displayName || "nome não definido";
+      this.usuario.photoURL = user.photoURL;
+      this.usuario.emailVerified = user.emailVerified;
+      this.usuario.grupoMaster = user.grupoMaster || "";
+      this.usuario.subGrupo = user.subGrupo || "";
+      this.usuario.ativo = user.ativo || true;
+      this.usuario.admin = user.admin || true;
+      this.usuario.leitor = user.leitor || true;
+      this.usuario.editor = user.editor || true;
     },
-    getUsuario() {
-      const user = JSON.parse(window.localStorage.getItem("usuario"));
-      //console.log("getUsuario", result);
-      if (user) {
-        this.usuario = user;
-        this.isAuthenticated = true;
+    async buscaUsuario(user) {
+      try {
+        const docRef = doc(db, "usuarios", user.uid);
+        const docSnap = await getDoc(docRef);
+        //console.log("Buscando", docSnap.data());
+        if (docSnap.exists) {
+          console.log("Usuario encontrado", docSnap.data());
+          this.usuario = docSnap.data(); // Se existe, pega os dados do usuario
+          window.localStorage.setItem("usuario", JSON.stringify(this.usuario)); // Salva no localStorage
+        } else {
+          console.log("Usuario não encontrado");
+          thi.atualizaUsuarioNoFirestore(user);
+          window.localStorage.setItem("usuario", JSON.stringify(this.usuario)); // Salva no localStorage
+        }
+      } catch (error) {
+        console.log(error.message);
       }
     },
-    removeUsuario() {
-      this.usuario = {};
-      this.isAuthenticated = false;
-      window.localStorage.removeItem("usuario");
+    async removeUsuario() {
+      signOut(auth)
+        .then(() => {
+          this.usuario = {};
+          this.isAuthenticated = false;
+          window.localStorage.removeItem("usuario");
+          console.log("Usuario deslogado...");
+        })
+        .catch((error) => {
+          console.log(error.message);
+        });
     },
     async atualizaUsuarioNoFirestore(user) {
-      await setDoc(doc(db, "usuarios", user.uid), user);
+      try {
+        const docRef = doc(db, "usuarios", user.uid);
+        await setDoc(
+          docRef,
+          {
+            ...this.usuario,
+            atualizado: serverTimestamp(),
+          },
+          { merge: true }
+        );
+      } catch (error) {
+        console.log(error);
+      }
     },
     async atualizarEmailDoUSuario(emailNovo) {
       await updateEmail(auth.currentUser, emailNovo)
@@ -149,6 +241,12 @@ export const useAuth = defineStore("useAuthStore", {
           const errorMessage = error.message;
           // ..
         });
+    },
+    setAdmin() {
+      this.usuario.admin = true;
+      this.usuario.leitor = true;
+      this.usuario.editor = true;
+      this.atualizaUsuarioNoFirestore(this.usuario);
     },
   },
 });

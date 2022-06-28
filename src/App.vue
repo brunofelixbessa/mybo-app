@@ -3,9 +3,24 @@
 </template>
 
 <script>
-import { defineComponent } from 'vue'
+import { defineComponent, onBeforeMount } from "vue";
+//import { useAuth } from "stores/auth";
 
 export default defineComponent({
-  name: 'App'
-})
+  name: "App",
+  // setup() {
+  //   const storeAuth = useAuth();
+
+  //   onBeforeMount(() => {
+  //     buscaStatus();
+  //   });
+
+  //   const buscaStatus = async () => {
+  //     await storeAuth.verificaStatus();
+  //   };
+  //   return {
+  //     storeAuth,
+  //   };
+  // },
+});
 </script>

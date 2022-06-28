@@ -3,7 +3,7 @@
   <q-page class="row justify-center q-pa-md">
     <q-form @submit="onSalvar()" class="col-md-10 col-xs-12 q-gutter-y-md">
       <p class="text-h6">Grupo ou Matriz</p>
-      <div class="row">
+      <div class="row q-gutter-x-md">
         <q-input
           v-model="grupo.nome"
           label="Nome"
@@ -32,7 +32,7 @@
           :rules="[(val) => (val && val.length > 0) || 'Campo obrigatório.']"
         ></q-input>
       </div>
-      <div class="row">
+      <div class="row q-gutter-x-md">
         <q-input class="col" outlined v-model="grupo.primary" label="Primaria">
           <template v-slot:append>
             <q-icon name="colorize" class="cursor-pointer">
@@ -65,10 +65,26 @@
             </q-icon>
           </template>
         </q-input>
-        <q-file class="col" outlined v-model="grupo.logo" label="Logo">
+        <q-file
+          class="col"
+          outlined
+          bottom-slots
+          v-model="logo"
+          label="Label"
+          counter
+        >
           <template v-slot:prepend>
-            <q-icon name="cloud_upload" />
+            <q-icon name="cloud_upload" @click.stop />
           </template>
+          <template v-slot:append>
+            <q-icon
+              name="close"
+              @click.stop="model = null"
+              class="cursor-pointer"
+            />
+          </template>
+
+          <template v-slot:hint> Field hint </template>
         </q-file>
       </div>
       <q-separator></q-separator>
@@ -89,6 +105,7 @@
               class="col-2"
               outlined
               type="number"
+              :readonly="editando"
             />
             <q-input
               v-model="form.nome"
@@ -106,11 +123,20 @@
             />
             <q-toggle class="col-2" v-model="form.ativo" label="Ativo" />
             <q-btn
+              v-if="!editando"
               class="col-1"
               icon="add"
               color="primary"
               size="lg"
               @click="addSubGrupo()"
+            />
+            <q-btn
+              v-else
+              class="col-1"
+              icon="save"
+              color="primary"
+              size="lg"
+              @click="editarSubGrupo()"
             />
           </template>
 
@@ -150,12 +176,14 @@ import { defineComponent, ref, onMounted } from "vue";
 import useMsg from "src/services/MsgService";
 import useFiretore from "src/services/FireStoreService";
 import { useAuth } from "stores/auth";
+import { useQuasar } from "quasar";
 
 export default defineComponent({
   setup() {
     const storeAuth = useAuth();
-    const { salvarGrupo, buscaUmGrupoCache } = useFiretore();
+    const { salvarGrupo, buscaUmGrupoCache, removerSubGrupo } = useFiretore();
     const { MsgSucesso, MsgErro } = useMsg();
+    const $q = useQuasar();
 
     //Variaveis
     const columns = [
@@ -165,7 +193,8 @@ export default defineComponent({
       { name: "Ativo", label: "Ativo", field: "ativo", align: "center" },
       { name: "actions", label: "Ações", field: "actions", align: "center" },
     ];
-    //const uid = ref("XeGyV7akvVPJaiVtJ4NTe6KY4Y02");
+
+    const editando = ref(false);
 
     const linhas = ref([]);
     const form = ref({
@@ -175,48 +204,72 @@ export default defineComponent({
       ativo: true,
       urlPulica: "",
       qrCode: "",
+      index: "",
     });
     const grupo = ref({
-      id: "",
       nome: "",
       valor: "",
       primary: "",
       secondary: "",
       logo: "",
       subgrupos: [],
+      admin: "",
+      telefone: "",
     });
+
+    const logo = ref(null);
+    const user = storeAuth.getUser;
 
     //Metodos
     onMounted(async () => {
-      storeAuth.getUsuario(); //busca no cache
+      //storeAuth.retornaUsuario(); //busca no cache
+      //console.log(user);
       buscaGrupo();
     });
 
     const buscaGrupo = async () => {
-      const retorno = await buscaUmGrupoCache(storeAuth.usuario.grupoMaster);
-      //console.log(retorno);
-      //grupo.value = retorno;
-      //linhas.value = grupo.value.subgrupos;
+      const retorno = await buscaUmGrupoCache(user.grupoMaster);
+      grupo.value = retorno;
+      linhas.value = grupo.value?.subgrupos;
     };
-
-    const onSalvar = () => {
-      salvarGrupo(grupo.value);
+    const onSalvar = async () => {
+      // primary: "#344955",
+      // secondary: "#f9aa33",
+      grupo.value.admin = user.uid;
+      grupo.value.subgrupos = linhas.value;
+      // console.log(linhas.value);
+      await salvarGrupo(grupo.value);
     };
-
     const addSubGrupo = () => {
+      let existe = false;
+
       if (form.value.id <= 0 || form.value.nome === "") {
         MsgErro("Codigo deve ser maior que 0 e nome não pode ser vazio");
         return;
       }
-      linhas.value.push({
-        id: form.value.id,
-        nome: form.value.nome,
-        valor: form.value.valor,
-        ativo: form.value.ativo,
-        urlPulica: form.value.urlPulica,
-        qrCode: form.value.qrCode,
+
+      linhas.value.forEach((element) => {
+        if (element.id === form.value.id) {
+          MsgErro("ID deve ser único");
+          existe = true;
+          return;
+        }
       });
 
+      if (!existe) {
+        linhas.value.push({
+          id: form.value.id,
+          nome: form.value.nome,
+          valor: form.value.valor,
+          ativo: form.value.ativo,
+          urlPulica: form.value.urlPulica,
+          qrCode: form.value.qrCode,
+        });
+
+        limpaForm();
+      }
+    };
+    const limpaForm = () => {
       form.value.id = "";
       form.value.nome = "";
       form.value.valor = "";
@@ -224,18 +277,22 @@ export default defineComponent({
       form.value.urlPulica = "";
       form.value.qrCode = "";
     };
-
     const removerLinha = async (linha) => {
       try {
         $q.dialog({
           title: "Remover",
           message:
-            "Deseja realmente deletar esse grupo? Não será possivel restaurar os dados.",
+            "Deseja realmente deletar esse subgrupo? Não será possivel restaurar os dados.",
           cancel: true,
           persistent: true,
         }).onOk(async () => {
-          //await remover("campanhas", linha.id);
-          MsgSucesso("Removido com sucesso");
+          linhas.value.splice(linhas.value.indexOf(linha), 1);
+          console.log(linhas.value);
+
+          await removerSubGrupo(grupo.value);
+          await salvarGrupo(grupo.value);
+
+          MsgSucesso("SubGrupo Removrdo com sucesso");
           buscaGrupo();
         });
       } catch (error) {
@@ -247,13 +304,25 @@ export default defineComponent({
         });
       }
     };
-
     const editarLinha = (linha) => {
-      form.value.codigo = linha.codigo;
+      form.value.id = linha.id;
       form.value.nome = linha.nome;
       form.value.valor = linha.valor;
       form.value.ativo = linha.ativo;
       form.value.index = linha.index;
+      editando.value = true;
+    };
+    const editarSubGrupo = () => {
+      const index = linhas.value.findIndex(
+        (element) => element.id === form.value.id
+      );
+      linhas.value[index].nome = form.value.nome;
+      linhas.value[index].valor = form.value.valor;
+      linhas.value[index].ativo = form.value.ativo;
+      linhas.value[index].urlPulica = form.value.urlPulica;
+      linhas.value[index].qrCode = form.value.qrCode;
+      limpaForm();
+      editando.value = false;
     };
 
     return {
@@ -261,10 +330,13 @@ export default defineComponent({
       form,
       columns,
       linhas,
+      logo,
       onSalvar,
       addSubGrupo,
       removerLinha,
       editarLinha,
+      editarSubGrupo,
+      editando,
     };
   },
 });

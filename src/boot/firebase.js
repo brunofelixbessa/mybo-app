@@ -4,20 +4,26 @@ import { initializeApp } from "firebase/app";
 import {
   getFirestore,
   doc,
+  addDoc,
   getDoc,
   setDoc,
+  updateDoc,
+  deleteField,
   collection,
   query,
   where,
   onSnapshot,
+  serverTimestamp,
 } from "firebase/firestore";
 import {
   getAuth,
   signInWithPopup,
   GoogleAuthProvider,
+  signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
+  updateProfile,
 } from "firebase/auth";
 
 import firebase from "firebase/compat/app";
@@ -47,18 +53,24 @@ export {
   storage,
   db,
   doc,
+  addDoc,
   getDoc,
   setDoc,
+  updateDoc,
+  deleteField,
   collection,
   query,
   where,
   onSnapshot,
+  serverTimestamp,
   auth,
   signInWithPopup,
   GoogleAuthProvider,
+  signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
+  updateProfile,
 };
 
 export default boot(async (/*{ db, setDoc }*/) => {

@@ -2,6 +2,7 @@
   <q-page class="flex flex-center row q-pa-md">
     <q-form class="col-md-5 col-xs-12 q-gutter-y-md">
       <div class="text-center text-h3">Acesso restrito</div>
+      <q-input v-if="cadastrando" v-model="form.nome" label="Nome" outlined />
       <q-input class="q-mt-md" outlined v-model="form.email" label="Email" />
 
       <q-input v-model="form.password" label="Senha" outlined type="password" />
@@ -20,6 +21,7 @@
         size="xl"
         color="secondary"
         label="Entrar"
+        @click="handlerAutenticar()"
       />
       <q-btn
         v-else
@@ -30,7 +32,7 @@
         label="Cadastrar"
         @click="criarCadastro()"
       />
-      <q-btn
+      <!-- <q-btn
         outline
         no-caps
         class="full-width"
@@ -38,7 +40,7 @@
         color="negative"
         label="Google"
         @click="google()"
-      />
+      /> -->
       <q-space />
       <q-btn
         v-if="!cadastrando"
@@ -77,16 +79,12 @@ import useMsg from "src/services/MsgService";
 export default {
   name: "LoginPage",
 
-  onBeforeMount() {
-    //this.storeAuth.verificaStatus();
-    console.log("LoginPage2");
-  },
-
   setup() {
-    const { MsgAguarde, MsgSucesso, MsgAviso } = useMsg();
+    const { MsgAguarde, MsgSucesso, MsgAviso, MsgErro } = useMsg();
     const router = useRouter();
     const storeAuth = useAuth();
     const form = ref({
+      nome: "",
       email: "",
       password: "",
       password2: "",
@@ -96,8 +94,8 @@ export default {
     const cadastrando = ref(false);
 
     onMounted(() => {
-      storeAuth.verificaStatus();
-      console.log("LoginPage", storeAuth.isAuthenticated, paginaRequerente);
+      //storeAuth.verificaStatus();
+      //console.log("LoginPage", storeAuth.isAuthenticated, paginaRequerente);
       if (storeAuth.isAuthenticated) {
         router.push(paginaRequerente);
       }
@@ -108,17 +106,43 @@ export default {
       router.push(paginaRequerente);
     };
     const criarCadastro = async () => {
-      //Verifica senhas igauis
-      if (form.value.password !== form.value.password2) {
-        MsgAviso("Senhas não conferem");
-        return;
-      }
-      MsgAguarde(true);
-      //Cadastr no firebase
-      await tstoreAuth.cadastrarUsuario(form.value.email, form.value.password);
-      MsgAguarde(false);
+      try {
+        //Verifica senhas iguais
+        if (form.value.password !== form.value.password2) {
+          MsgAviso("Senhas não conferem");
+          return;
+        }
+        MsgAguarde(true);
+        //Cadastra no firebase
+        await storeAuth.cadastrarUsuario(form.value);
+        //Aguarda retorno
+        if (storeAuth.isAuthenticated) {
+          router.push(paginaRequerente);
+        }
+        MsgAguarde(false);
 
-      router.push(paginaRequerente);
+        router.push(paginaRequerente);
+      } catch (error) {
+        MsgAguarde(false);
+        MsgErro(error.message);
+      }
+    };
+    const handlerAutenticar = async () => {
+      try {
+        MsgAguarde(true);
+        //Cadastra no firebase
+        await storeAuth.loginEmail(form.value);
+        //Aguarda retorno
+        if (storeAuth.isAuthenticated) {
+          router.push(paginaRequerente);
+        }
+        MsgAguarde(false);
+
+        router.push(paginaRequerente);
+      } catch (error) {
+        MsgAguarde(false);
+        MsgErro(error.message);
+      }
     };
 
     return {
@@ -126,6 +150,7 @@ export default {
       cadastrando,
       google,
       criarCadastro,
+      handlerAutenticar,
     };
   },
 };
