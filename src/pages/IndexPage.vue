@@ -3,17 +3,27 @@
     <q-input outlined label="Celular"> </q-input>
     <q-btn label="Abrir" @click="buscar()"></q-btn>
     <q-btn label="Fechar " @click="salvar()"></q-btn>
+    <q-select
+      filled
+      v-model="modelMultiple"
+      multiple
+      :options="options"
+      use-chips
+      stack-label
+      label="Tags para filtro"
+    />
   </q-page>
 </template>
 
 <script>
-import { defineComponent, onMounted } from "vue";
-import useMsg from "src/services/MsgService";
+import { defineComponent, onMounted, ref } from "vue";
+import { MsgAtencao, MsgErro, MsgSucesso, MsgCopia } from "/src/util/useMsg";
 
 export default defineComponent({
   name: "IndexPage",
   setup() {
-    const { MsgAguarde, MsgSucesso, MsgAviso } = useMsg();
+    const modelMultiple = ref(["Facebook"]);
+    const options = ["Google", "Facebook", "Twitter", "Apple", "Oracle"];
 
     let timer;
 
@@ -43,6 +53,8 @@ export default defineComponent({
     return {
       buscar,
       salvar,
+      modelMultiple,
+      options,
     };
   },
 });

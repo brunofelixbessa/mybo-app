@@ -15,13 +15,11 @@ import {
 } from "boot/firebase";
 
 import { useAuth } from "stores/auth";
-
-import useMsg from "src/services/MsgService";
+import { MsgAtencao, MsgErro, MsgSucesso, MsgCopia } from "/src/util/useMsg";
 
 const result = ref(null);
 
 export default function useFiretore() {
-  const { MsgSucesso, MsgAviso } = useMsg();
   const storeAuth = useAuth();
 
   const salvarGrupo = async (data) => {
@@ -46,7 +44,6 @@ export default function useFiretore() {
       MsgAviso("Erro ao salvar grupo!");
     }
   };
-
   const buscaUmGrupoCache = async (id) => {
     try {
       const docRef = doc(db, "grupos", id);
@@ -77,12 +74,30 @@ export default function useFiretore() {
     });
     return unsub;
   };
-
   const removerSubGrupo = async (data) => {
     const docRef = doc(db, "grupos", data.id);
     await updateDoc(docRef, {
       subgrupos: deleteField(),
     });
+  };
+  //
+  const buscaDocumentoPorCPF = async (cpf) => {
+    try {
+      MsgOcupado(true);
+      const { data, erro, message } = await apiGrupovab
+        .get("/v1/documento/cliente/" + cpf)
+        .then((res) => {
+          if (res) {
+            return res.data;
+          }
+        });
+      MsgAPI(data, erro, message);
+      MsgOcupado(false);
+      return erro ? false : data;
+    } catch (e) {
+      MsgOcupado(false);
+      MsgErro("Erro ao buscar documento do cliente");
+    }
   };
 
   return {

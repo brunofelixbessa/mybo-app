@@ -1,9 +1,7 @@
 import { defineStore } from "pinia";
-
+import { MsgAtencao, MsgErro, MsgSucesso, MsgOcupado } from "/src/util/useMsg";
 import {
   auth,
-  signInWithPopup,
-  GoogleAuthProvider,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
@@ -13,7 +11,6 @@ import {
   setDoc,
   getDoc,
   serverTimestamp,
-  updateProfile,
 } from "boot/firebase";
 
 export const useAuth = defineStore("useAuthStore", {
@@ -38,96 +35,66 @@ export const useAuth = defineStore("useAuthStore", {
     //isAuthenticated: (state) => state.authenticated,
   },
   actions: {
-    // Testando actions
-    async login(form) {
-      const { email, password } = form;
-      try {
-        await signInWithEmailAndPassword(auth, email, password);
-      } catch (error) {
-        switch (error.code) {
-          case "auth/user-not-found":
-            alert("User not found");
-            break;
-          case "auth/wrong-password":
-            alert("Wrong password");
-            break;
-          default:
-            alert("Something went wrong");
-        }
-        return;
-      }
-      this.usuario = auth.currentUser;
-    },
-    // Fim teste actions
-    async loginGoogle() {
-      await signInWithPopup(auth, new GoogleAuthProvider())
-        .then((result) => {
-          this.buscaUsuario(result.user);
-          //this.atualizaUsuarioNoFirestore(result.user);
-        })
-        .catch((error) => {
-          console.log(error);
-          //this.removeUsuario(error.message);
-        });
-    },
     async loginEmail(form) {
+      MsgOcupado(true);
       await signInWithEmailAndPassword(auth, form.email, form.password)
         .then((result) => {
+          //console.log(result);
           //this.guardaUsuario(result.user);
-          //this.usuario.nome = result.user;
-          //this.atualizaUsuarioNoFirestore();
+          this.hidrataUsuario(result.user);
+          this.usuario.nome = result.user;
+          this.atualizaUsuarioNoFirestore();
+          MsgSucesso("Logado com sucesso");
         })
         .catch((error) => {
+          //console.log(error.code);
+          switch (error.code) {
+            case "auth/invalid-email":
+              MsgAtencao("Email ou senha inválido.");
+              break;
+            default:
+              MsgErro("Erro desconhecido.");
+          }
+          //console.log(error);
           this.removeUsuario(error.message);
         });
+      MsgOcupado(false);
     },
     async cadastrarUsuario(form) {
+      //console.log(form);
+      MsgOcupado(true);
       await createUserWithEmailAndPassword(auth, form.email, form.password)
         .then((result) => {
           // Cadastra e já loga
           if (result) {
-            //console.log(result);
-            //this.hidrataUsuario(result.user);
-            //this.usuario.displayName = form.nome; // Adiciona o nome e atualiza o profile
-            //this.atualizarProfile();
+            console.log(result);
+            this.hidrataUsuario(result.user);
+            this.usuario.displayName = form.nome; // Adiciona o nome e atualiza o profile
+            this.atualizarProfile();
+            MsgSucesso("Logado com sucesso");
           }
         })
         .catch((error) => {
           switch (error.code) {
             case "auth/email-already-in-use":
-              alert("Email já está cadastrado.");
+              MsgAtencao("Email já está cadastrado.");
               break;
             case "auth/invalid-email":
-              alert("Invalid email");
+              MsgAtencao("Invalid email");
               break;
             case "auth/operation-not-allowed":
-              alert("Operation not allowed");
+              MsgAtencao("Operation not allowed");
               break;
             case "auth/weak-password":
-              alert("Weak password");
+              MsgAtencao("Weak password");
               break;
             default:
-              alert("Erro desconhecido.");
+              MsgErro("Erro desconhecido.");
           }
-          //console.log(error);
+          console.log(error);
           this.removeUsuario(error.message);
         });
-    },
-    async atualizarProfile() {
-      await updateProfile(auth.currentUser, {
-        displayName: this.usuario.displayName,
-        photoURL: "https://cdn.quasar.dev/logo-v2/svg/logo.svg",
-      })
-        .then(() => {
-          // Profile updated!
-          this.atualizaUsuarioNoFirestore(this.usuario);
-          this.buscaUsuario(this.usuario);
-        })
-        .catch((error) => {
-          console.log(error);
-          // An error occurred
-          // ...
-        });
+      MsgOcupado(false);
     },
     async verificaStatus() {
       this.usuario = JSON.parse(window.localStorage.getItem("usuario")); // Busca localstorage
@@ -155,24 +122,6 @@ export const useAuth = defineStore("useAuthStore", {
       this.usuario.leitor = user.leitor || true;
       this.usuario.editor = user.editor || true;
     },
-    async buscaUsuario(user) {
-      try {
-        const docRef = doc(db, "usuarios", user.uid);
-        const docSnap = await getDoc(docRef);
-        //console.log("Buscando", docSnap.data());
-        if (docSnap.exists) {
-          console.log("Usuario encontrado", docSnap.data());
-          this.usuario = docSnap.data(); // Se existe, pega os dados do usuario
-          window.localStorage.setItem("usuario", JSON.stringify(this.usuario)); // Salva no localStorage
-        } else {
-          console.log("Usuario não encontrado");
-          thi.atualizaUsuarioNoFirestore(user);
-          window.localStorage.setItem("usuario", JSON.stringify(this.usuario)); // Salva no localStorage
-        }
-      } catch (error) {
-        console.log(error.message);
-      }
-    },
     async removeUsuario() {
       signOut(auth)
         .then(() => {
@@ -185,68 +134,24 @@ export const useAuth = defineStore("useAuthStore", {
           console.log(error.message);
         });
     },
-    async atualizaUsuarioNoFirestore(user) {
-      try {
-        const docRef = doc(db, "usuarios", user.uid);
-        await setDoc(
-          docRef,
-          {
-            ...this.usuario,
-            atualizado: serverTimestamp(),
-          },
-          { merge: true }
-        );
-      } catch (error) {
-        console.log(error);
-      }
-    },
-    async atualizarEmailDoUSuario(emailNovo) {
-      await updateEmail(auth.currentUser, emailNovo)
-        .then(() => {
-          // Email updated!
-          // ...
+    async atualizaUsuarioNoFirestore() {
+      //
+      const docRef = doc(db, "usuarios", this.usuario.uid);
+      console.log(docRef);
+      await setDoc(
+        docRef,
+        {
+          ...this.usuario,
+          atualizado: serverTimestamp(),
+        },
+        { merge: true }
+      )
+        .then((result) => {
+          console.log(result, 3);
         })
         .catch((error) => {
-          // An error occurred
-          // ...
+          console.log(error, 2);
         });
-    },
-    async enviarEmailDeVerificacao() {
-      await sendEmailVerification(auth.currentUser).then(() => {
-        // Email verification sent!
-        // ...
-      });
-    },
-    async redefinirSenhaDoUsuario() {
-      const user = auth.currentUser;
-      const newPassword = getASecureRandomPassword();
-
-      await updatePassword(user, newPassword)
-        .then(() => {
-          // Update successful.
-        })
-        .catch((error) => {
-          // An error ocurred
-          // ...
-        });
-    },
-    async emailDeRedefinicaoDeSenha(email) {
-      await sendPasswordResetEmail(auth, email)
-        .then(() => {
-          // Password reset email sent!
-          // ..
-        })
-        .catch((error) => {
-          const errorCode = error.code;
-          const errorMessage = error.message;
-          // ..
-        });
-    },
-    setAdmin() {
-      this.usuario.admin = true;
-      this.usuario.leitor = true;
-      this.usuario.editor = true;
-      this.atualizaUsuarioNoFirestore(this.usuario);
     },
   },
 });

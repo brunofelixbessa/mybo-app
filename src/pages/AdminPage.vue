@@ -173,7 +173,7 @@
 
 <script>
 import { defineComponent, ref, onMounted } from "vue";
-import useMsg from "src/services/MsgService";
+import { MsgAtencao, MsgErro, MsgSucesso, MsgCopia } from "/src/util/useMsg";
 import useFiretore from "src/services/FireStoreService";
 import { useAuth } from "stores/auth";
 import { useQuasar } from "quasar";
@@ -182,7 +182,6 @@ export default defineComponent({
   setup() {
     const storeAuth = useAuth();
     const { salvarGrupo, buscaUmGrupoCache, removerSubGrupo } = useFiretore();
-    const { MsgSucesso, MsgErro } = useMsg();
     const $q = useQuasar();
 
     //Variaveis

@@ -74,13 +74,11 @@
 import { ref, onMounted } from "vue";
 import { useAuth } from "stores/auth";
 import { useRouter } from "vue-router";
-import useMsg from "src/services/MsgService";
-
+import { MsgAtencao, MsgErro, MsgSucesso, MsgOcupado } from "/src/util/useMsg";
 export default {
   name: "LoginPage",
 
   setup() {
-    const { MsgAguarde, MsgSucesso, MsgAviso, MsgErro } = useMsg();
     const router = useRouter();
     const storeAuth = useAuth();
     const form = ref({
@@ -106,43 +104,23 @@ export default {
       router.push(paginaRequerente);
     };
     const criarCadastro = async () => {
-      try {
-        //Verifica senhas iguais
-        if (form.value.password !== form.value.password2) {
-          MsgAviso("Senhas não conferem");
-          return;
-        }
-        MsgAguarde(true);
-        //Cadastra no firebase
-        await storeAuth.cadastrarUsuario(form.value);
-        //Aguarda retorno
-        if (storeAuth.isAuthenticated) {
-          router.push(paginaRequerente);
-        }
-        MsgAguarde(false);
-
-        router.push(paginaRequerente);
-      } catch (error) {
-        MsgAguarde(false);
-        MsgErro(error.message);
+      //Verifica senhas iguais
+      if (form.value.password !== form.value.password2) {
+        MsgAtencao("Senhas não conferem");
+        return;
       }
+      //Cadastra no firebase
+      await storeAuth.cadastrarUsuario(form.value);
+      //Aguarda retorno
+      if (storeAuth.isAuthenticated) router.push(paginaRequerente);
+      else router.push(paginaRequerente);
     };
     const handlerAutenticar = async () => {
-      try {
-        MsgAguarde(true);
-        //Cadastra no firebase
-        await storeAuth.loginEmail(form.value);
-        //Aguarda retorno
-        if (storeAuth.isAuthenticated) {
-          router.push(paginaRequerente);
-        }
-        MsgAguarde(false);
-
-        router.push(paginaRequerente);
-      } catch (error) {
-        MsgAguarde(false);
-        MsgErro(error.message);
-      }
+      // Autentica
+      await storeAuth.loginEmail(form.value);
+      //Aguarda retorno
+      if (storeAuth.isAuthenticated) router.push(paginaRequerente);
+      //else router.push(paginaRequerente);
     };
 
     return {
